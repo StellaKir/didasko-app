@@ -11,7 +11,7 @@ body {
 
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
 
   min-height: 100vh;
   padding: 24px;
@@ -19,18 +19,12 @@ body {
 
 .app {
   width: 1200px;
-  height: 750px;
 
   display: flex;
-
   background: white;
-
   border-radius: 28px;
-
   overflow: hidden;
-
   border: 1px solid #e8edf3;
-
   box-shadow:
     0 10px 30px rgba(15, 23, 42, 0.08),
     0 30px 80px rgba(15, 23, 42, 0.12);
@@ -199,4 +193,267 @@ body {
   font-weight: 700;
   cursor: pointer;
   margin-bottom: 18px;
+}
+
+.students-section {
+  margin-top: 24px;
+}
+
+.students-section h2 {
+  margin-bottom: 18px;
+}
+
+.students-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.student-card {
+  background: white;
+  border: 1px solid #e8edf3;
+  border-radius: 18px;
+  padding: 22px;
+  box-shadow: 0 4px 18px rgba(15, 23, 42, 0.04);
+}
+
+.student-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: #fff1eb;
+  color: #f26a21;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 20px;
+  margin-bottom: 16px;
+}
+
+.student-card h3 {
+  margin-bottom: 8px;
+}
+
+.student-card p {
+  color: #64748b;
+  margin-bottom: 10px;
+}
+
+.student-card span {
+  background: #f1f5f9;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.student-form {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.student-form input {
+  flex: 1;
+
+  border: 1px solid #e8edf3;
+
+  border-radius: 14px;
+
+  padding: 14px;
+
+  font-size: 14px;
+
+  outline: none;
+}
+
+.student-form input:focus {
+  border-color: #f26a21;
+}
+
+.student-form button {
+  border: none;
+
+  background: #f26a21;
+
+  color: white;
+
+  padding: 0 18px;
+
+  border-radius: 14px;
+
+  font-weight: 700;
+
+  cursor: pointer;
+}
+
+.delete-btn {
+  margin-top: 16px;
+
+  border: none;
+
+  background: #fee2e2;
+
+  color: #dc2626;
+
+  padding: 10px 14px;
+
+  border-radius: 12px;
+
+  font-weight: 700;
+
+  cursor: pointer;
+
+  width: 100%;
+}
+
+.delete-btn:hover {
+  background: #fecaca;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.35);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal {
+  width: 420px;
+  background: white;
+  border-radius: 24px;
+  padding: 26px;
+  box-shadow: 0 30px 80px rgba(15, 23, 42, 0.25);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.modal-header h2 {
+  font-size: 22px;
+}
+
+.modal-close {
+  border: none;
+  background: #f1f5f9;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.modal-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #475569;
+}
+
+.modal-form input,
+.modal-form select {
+  border: 1px solid #e8edf3;
+  border-radius: 14px;
+  padding: 13px 14px;
+  font-size: 14px;
+  outline: none;
+}
+
+.modal-form input:focus {
+  border-color: #f26a21;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.cancel-btn,
+.save-btn {
+  flex: 1;
+  border: none;
+  padding: 13px;
+  border-radius: 999px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.cancel-btn {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.save-btn {
+  background: #f26a21;
+  color: white;
+}
+
+.student-profile {
+  text-align: center;
+}
+
+.student-profile-avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 22px;
+  background: #fff1eb;
+  color: #f26a21;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  font-weight: 800;
+  margin: 0 auto 16px;
+}
+
+.student-profile h3 {
+  font-size: 22px;
+  margin-bottom: 6px;
+}
+
+.student-profile p {
+  color: #64748b;
+  margin-bottom: 20px;
+}
+
+.profile-info {
+  display: grid;
+  gap: 12px;
+  text-align: left;
+}
+
+.profile-info div {
+  background: #f8fafc;
+  border: 1px solid #e8edf3;
+  border-radius: 14px;
+  padding: 14px;
+}
+
+.profile-info strong {
+  display: block;
+  font-size: 12px;
+  color: #94a3b8;
+  margin-bottom: 4px;
+}
+
+.profile-info span {
+  font-weight: 700;
+  color: #0f172a;
 }
