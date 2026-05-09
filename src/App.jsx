@@ -1,81 +1,133 @@
 import './App.css'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 import StatCard from './components/StatCard'
 import LessonRow from './components/LessonRow'
 import StudentCard from './components/StudentCard'
 
-function App() {
-  const [lessons, setLessons] = useState([
-    {
-      id: 1,
-      time: '15:00',
-      student: 'Νίκος Αλεξίου',
-      subject: 'Μαθηματικά',
-      duration: "60'",
-    },
-    {
-      id: 2,
-      time: '17:00',
-      student: 'Ελένη Κωστοπούλου',
-      subject: 'Αγγλικά',
-      duration: "60'",
-    },
-    {
-      id: 3,
-      time: '19:00',
-      student: 'Μαρία Σταύρου',
-      subject: 'Φυσική',
-      duration: "60'",
-    },
-  ])
+const todayDate = new Date().toLocaleDateString('en-CA')
 
-  const [students, setStudents] = useState([
-    {
-      id: 1,
-      name: 'Νίκος Αλεξίου',
-      phone: '6912345678',
-      subject: 'Μαθηματικά',
-      classLevel: "Γ' Λυκείου",
-    },
-    {
-      id: 2,
-      name: 'Ελένη Κωστοπούλου',
-      phone: '6923456789',
-      subject: 'Αγγλικά',
-      classLevel: "Β' Γυμνασίου",
-    },
-    {
-      id: 3,
-      name: 'Μαρία Σταύρου',
-      phone: '6934567890',
-      subject: 'Φυσική',
-      classLevel: "Α' Λυκείου",
-    },
-  ])
+const defaultLessons = [
+  {
+    id: 1,
+    date: todayDate,
+    time: '15:00',
+    student: 'Νίκος Αλεξίου',
+    subject: 'Μαθηματικά',
+    duration: "60'",
+    cancelled: false,
+  },
+  {
+    id: 2,
+    date: todayDate,
+    time: '17:00',
+    student: 'Ελένη Κωστοπούλου',
+    subject: 'Αγγλικά',
+    duration: "60'",
+    cancelled: false,
+  },
+  {
+    id: 3,
+    date: todayDate,
+    time: '19:00',
+    student: 'Μαρία Σταύρου',
+    subject: 'Φυσική',
+    duration: "60'",
+    cancelled: false,
+  },
+]
+
+const defaultStudents = [
+  {
+    id: 1,
+    name: 'Νίκος Αλεξίου',
+    phone: '6912345678',
+    subject: 'Μαθηματικά',
+    classLevel: "Γ' Λυκείου",
+    notes: '',
+    price: 20,
+    paid: false,
+  },
+  {
+    id: 2,
+    name: 'Ελένη Κωστοπούλου',
+    phone: '6923456789',
+    subject: 'Αγγλικά',
+    classLevel: "Β' Γυμνασίου",
+    notes: '',
+    price: 20,
+    paid: false,
+  },
+  {
+    id: 3,
+    name: 'Μαρία Σταύρου',
+    phone: '6934567890',
+    subject: 'Φυσική',
+    classLevel: "Α' Λυκείου",
+    notes: '',
+    price: 20,
+    paid: false,
+  },
+]
+
+function App() {
+  const [lessons, setLessons] = useState(() => {
+    const savedLessons = localStorage.getItem('didasko_lessons')
+    return savedLessons ? JSON.parse(savedLessons) : defaultLessons
+  })
+
+  const [students, setStudents] = useState(() => {
+    const savedStudents = localStorage.getItem('didasko_students')
+    return savedStudents ? JSON.parse(savedStudents) : defaultStudents
+  })
 
   const [showStudentModal, setShowStudentModal] = useState(false)
   const [showLessonModal, setShowLessonModal] = useState(false)
   const [selectedStudent, setSelectedStudent] = useState(null)
+  const [isEditingStudent, setIsEditingStudent] = useState(false)
+  const [activePage, setActivePage] = useState('dashboard')
 
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [phone, setPhone] = useState('')
+  const [studentClassLevel, setStudentClassLevel] = useState('')
+  const [studentSubject, setStudentSubject] = useState('')
+  const [studentPrice, setStudentPrice] = useState('')
 
   const [lessonStudent, setLessonStudent] = useState('')
   const [lessonTime, setLessonTime] = useState('')
+  const [lessonDate, setLessonDate] = useState('')
   const [lessonSubject, setLessonSubject] = useState('')
   const [lessonDuration, setLessonDuration] = useState("60'")
 
+  useEffect(() => {
+    localStorage.setItem('didasko_students', JSON.stringify(students))
+  }, [students])
+
+  useEffect(() => {
+    localStorage.setItem('didasko_lessons', JSON.stringify(lessons))
+  }, [lessons])
+
   function addStudent() {
-    if (firstName.trim() === '' || lastName.trim() === '') return
+    if (
+      firstName.trim() === '' ||
+      lastName.trim() === '' ||
+      studentClassLevel === '' ||
+      studentSubject === '' ||
+      studentPrice === ''
+    ) {
+      return
+    }
 
     const newStudent = {
       id: Date.now(),
       name: `${firstName} ${lastName}`,
       phone: phone,
-      subject: 'Νέο Μάθημα',
-      classLevel: 'Λύκειο',
+      subject: studentSubject,
+      classLevel: studentClassLevel,
+      notes: '',
+      price: Number(studentPrice),
+      paid: false,
     }
 
     setStudents([...students, newStudent])
@@ -83,18 +135,92 @@ function App() {
     setFirstName('')
     setLastName('')
     setPhone('')
+    setStudentClassLevel('')
+    setStudentSubject('')
+    setStudentPrice('')
     setShowStudentModal(false)
   }
 
   function deleteStudent(id) {
     const filteredStudents = students.filter((student) => student.id !== id)
     setStudents(filteredStudents)
+
+    if (selectedStudent && selectedStudent.id === id) {
+      setSelectedStudent(null)
+    }
+  }
+
+  function updateStudentNotes(id, newNotes) {
+    const updatedStudents = students.map((student) => {
+      if (student.id === id) {
+        return {
+          ...student,
+          notes: newNotes,
+        }
+      }
+
+      return student
+    })
+
+    setStudents(updatedStudents)
+
+    if (selectedStudent && selectedStudent.id === id) {
+      setSelectedStudent({
+        ...selectedStudent,
+        notes: newNotes,
+      })
+    }
+  }
+
+  function togglePayment(id) {
+    const updatedStudents = students.map((student) => {
+      if (student.id === id) {
+        return {
+          ...student,
+          paid: !student.paid,
+        }
+      }
+
+      return student
+    })
+
+    setStudents(updatedStudents)
+
+    if (selectedStudent && selectedStudent.id === id) {
+      setSelectedStudent({
+        ...selectedStudent,
+        paid: !selectedStudent.paid,
+      })
+    }
+  }
+
+  function updateStudentField(id, field, value) {
+    const updatedStudents = students.map((student) => {
+      if (student.id === id) {
+        return {
+          ...student,
+          [field]: value,
+        }
+      }
+
+      return student
+    })
+
+    setStudents(updatedStudents)
+
+    if (selectedStudent && selectedStudent.id === id) {
+      setSelectedStudent({
+        ...selectedStudent,
+        [field]: value,
+      })
+    }
   }
 
   function addLesson() {
     if (
       lessonStudent.trim() === '' ||
       lessonTime.trim() === '' ||
+      lessonDate.trim() === '' ||
       lessonSubject.trim() === ''
     ) {
       return
@@ -103,13 +229,16 @@ function App() {
     const newLesson = {
       id: Date.now(),
       time: lessonTime,
+      date: lessonDate,
       student: lessonStudent,
       subject: lessonSubject,
       duration: lessonDuration,
+      cancelled: false,
     }
 
     setLessons([...lessons, newLesson])
 
+    setLessonDate('')
     setLessonStudent('')
     setLessonTime('')
     setLessonSubject('')
@@ -117,9 +246,45 @@ function App() {
     setShowLessonModal(false)
   }
 
+  function toggleLessonCancel(id) {
+    const updatedLessons = lessons.map((lesson) => {
+      if (lesson.id === id) {
+        return {
+          ...lesson,
+          cancelled: !lesson.cancelled,
+        }
+      }
+
+      return lesson
+    })
+
+    setLessons(updatedLessons)
+  }
+
+  const today = new Date().toLocaleDateString('en-CA')
+
+  const todayLessons = lessons
+    .filter((lesson) => lesson.date === today)
+    .sort((a, b) => a.time.localeCompare(b.time))
+
+  const sortedLessons = [...lessons].sort((a, b) => {
+    if (a.date === b.date) {
+      return a.time.localeCompare(b.time)
+    }
+
+    return a.date.localeCompare(b.date)
+  })
+
   const totalLessons = lessons.length
   const totalHours = lessons.length
-  const totalIncome = lessons.length * 20
+
+  const totalIncome = students
+    .filter((student) => student.paid)
+    .reduce((total, student) => total + student.price, 0)
+
+  const unpaidAmount = students
+    .filter((student) => !student.paid)
+    .reduce((total, student) => total + student.price, 0)
 
   return (
     <div className="app">
@@ -131,9 +296,18 @@ function App() {
         <p className="tagline">Teaching, organized.</p>
 
         <nav className="menu">
-          <button>Dashboard</button>
-          <button>Πρόγραμμα</button>
-          <button>Μαθητές</button>
+          <button onClick={() => setActivePage('dashboard')}>
+            Dashboard
+          </button>
+
+          <button onClick={() => setActivePage('schedule')}>
+            Πρόγραμμα
+          </button>
+
+          <button onClick={() => setActivePage('students')}>
+            Μαθητές
+          </button>
+
           <button>Πληρωμές</button>
           <button>Ρυθμίσεις</button>
         </nav>
@@ -142,7 +316,11 @@ function App() {
       <main className="main">
         <header className="topbar">
           <div>
-            <h2>Dashboard</h2>
+            <h2>
+              {activePage === 'dashboard' && 'Dashboard'}
+              {activePage === 'schedule' && 'Πρόγραμμα'}
+              {activePage === 'students' && 'Μαθητές'}
+            </h2>
             <p>Καλώς ήρθες στο Didasko</p>
           </div>
 
@@ -155,51 +333,115 @@ function App() {
         </header>
 
         <section className="content">
-          <div className="stats-grid">
-            <StatCard value={totalLessons} label="Μαθήματα" />
-            <StatCard value={`${totalHours} ώρες`} label="Ώρες" />
-            <StatCard value={`${totalIncome}€`} label="Έσοδα" />
-            <StatCard value="0€" label="Έξοδα" />
-          </div>
-
-          <div className="today-card">
-            <h3>Σήμερα</h3>
-
-            <button
-              onClick={() => setShowLessonModal(true)}
-              className="add-lesson-btn"
-            >
-              + Νέο Μάθημα
-            </button>
-
-            {lessons.map((lesson) => (
-              <LessonRow
-                key={lesson.id}
-                time={lesson.time}
-                student={lesson.student}
-                subject={lesson.subject}
-                duration={lesson.duration}
-              />
-            ))}
-          </div>
-
-          <div className="students-section">
-            <h2>Μαθητές</h2>
-
-            <div className="students-grid">
-              {students.map((student) => (
-                <StudentCard
-                  key={student.id}
-                  name={student.name}
-                  phone={student.phone}
-                  subject={student.subject}
-                  classLevel={student.classLevel}
-                  onClick={() => setSelectedStudent(student)}
-                  onDelete={() => deleteStudent(student.id)}
+          {activePage === 'dashboard' && (
+            <>
+              <div className="stats-grid">
+                <StatCard value={totalLessons} label="Μαθήματα" />
+                <StatCard value={`${totalHours} ώρες`} label="Ώρες" />
+                <StatCard value={`${totalIncome}€`} label="Έσοδα" />
+                <StatCard
+                  value={`${unpaidAmount}€`}
+                  label="Εκκρεμείς Πληρωμές"
                 />
-              ))}
+              </div>
+
+              <div className="today-card">
+                <h3>Σήμερα</h3>
+
+                <button
+                  onClick={() => setShowLessonModal(true)}
+                  className="add-lesson-btn"
+                >
+                  + Νέο Μάθημα
+                </button>
+
+                {todayLessons.map((lesson) => (
+                  <LessonRow
+                    key={lesson.id}
+                    time={lesson.time}
+                    date={lesson.date}
+                    student={lesson.student}
+                    subject={lesson.subject}
+                    duration={lesson.duration}
+                    cancelled={lesson.cancelled}
+                    onCancel={() => toggleLessonCancel(lesson.id)}
+                  />
+                ))}
+              </div>
+
+              <div className="students-section">
+                <h2>Μαθητές</h2>
+
+                <div className="students-grid">
+                  {students.map((student) => (
+                    <StudentCard
+                      key={student.id}
+                      name={student.name}
+                      phone={student.phone}
+                      subject={student.subject}
+                      classLevel={student.classLevel}
+                      onClick={() => {
+                        setSelectedStudent(student)
+                        setIsEditingStudent(false)
+                      }}
+                      onDelete={() => deleteStudent(student.id)}
+                    />
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+
+          {activePage === 'schedule' && (
+            <div className="schedule-page">
+              <h2>Πρόγραμμα</h2>
+
+              <button
+                onClick={() => setShowLessonModal(true)}
+                className="add-lesson-btn"
+              >
+                + Νέο Μάθημα
+              </button>
+
+              <div className="all-lessons">
+                {sortedLessons.map((lesson) => (
+                  <LessonRow
+                    key={lesson.id}
+                    time={lesson.time}
+                    date={lesson.date}
+                    student={lesson.student}
+                    subject={lesson.subject}
+                    duration={lesson.duration}
+                    cancelled={lesson.cancelled}
+                    onCancel={() => toggleLessonCancel(lesson.id)}
+                  />
+                ))}
+              </div>
             </div>
-          </div>
+          )}
+
+          {activePage === 'students' && (
+            <div className="students-page">
+              <h2>Όλοι οι Μαθητές</h2>
+
+              <div className="students-grid">
+                {students.map((student) => (
+                  <StudentCard
+                    key={student.id}
+                    name={student.name}
+                    phone={student.phone}
+                    subject={student.subject}
+                    classLevel={student.classLevel}
+                    onClick={() => {
+                      setSelectedStudent(student)
+                      setIsEditingStudent(false)
+                    }}
+                    onDelete={() => deleteStudent(student.id)}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
         </section>
       </main>
 
@@ -245,6 +487,49 @@ function App() {
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="π.χ. 6912345678"
+                />
+              </label>
+
+              <label>
+                Τάξη
+                <select
+                  value={studentClassLevel}
+                  onChange={(e) => setStudentClassLevel(e.target.value)}
+                >
+                  <option value="">Επίλεξε τάξη</option>
+                  <option value="Α' Γυμνασίου">Α' Γυμνασίου</option>
+                  <option value="Β' Γυμνασίου">Β' Γυμνασίου</option>
+                  <option value="Γ' Γυμνασίου">Γ' Γυμνασίου</option>
+                  <option value="Α' Λυκείου">Α' Λυκείου</option>
+                  <option value="Β' Λυκείου">Β' Λυκείου</option>
+                  <option value="Γ' Λυκείου">Γ' Λυκείου</option>
+                </select>
+              </label>
+
+              <label>
+                Μάθημα
+                <select
+                  value={studentSubject}
+                  onChange={(e) => setStudentSubject(e.target.value)}
+                >
+                  <option value="">Επίλεξε μάθημα</option>
+                  <option value="Μαθηματικά">Μαθηματικά</option>
+                  <option value="Πληροφορική">Πληροφορική</option>
+                  <option value="Αρχαία">Αρχαία</option>
+                  <option value="Έκθεση">Έκθεση</option>
+                  <option value="Φυσική">Φυσική</option>
+                  <option value="Χημεία">Χημεία</option>
+                  <option value="Αγγλικά">Αγγλικά</option>
+                </select>
+              </label>
+
+              <label>
+                Τιμή ανά μάθημα
+                <input
+                  type="number"
+                  value={studentPrice}
+                  onChange={(e) => setStudentPrice(e.target.value)}
+                  placeholder="π.χ. 20"
                 />
               </label>
             </div>
@@ -297,6 +582,15 @@ function App() {
               </label>
 
               <label>
+                Ημερομηνία
+                <input
+                  type="date"
+                  value={lessonDate}
+                  onChange={(e) => setLessonDate(e.target.value)}
+                />
+              </label>
+
+              <label>
                 Ώρα
                 <input
                   type="time"
@@ -305,29 +599,22 @@ function App() {
                 />
               </label>
 
-<label>
-  Μάθημα
-  <select
-    value={lessonSubject}
-    onChange={(e) => setLessonSubject(e.target.value)}
-  >
-    <option value="">Επίλεξε μάθημα</option>
-
-    <option value="Μαθηματικά">Μαθηματικά</option>
-
-    <option value="Πληροφορική">Πληροφορική</option>
-
-    <option value="Αρχαία">Αρχαία</option>
-
-    <option value="Έκθεση">Έκθεση</option>
-
-    <option value="Φυσική">Φυσική</option>
-
-    <option value="Χημεία">Χημεία</option>
-
-    <option value="Αγγλικά">Αγγλικά</option>
-  </select>
-</label>
+              <label>
+                Μάθημα
+                <select
+                  value={lessonSubject}
+                  onChange={(e) => setLessonSubject(e.target.value)}
+                >
+                  <option value="">Επίλεξε μάθημα</option>
+                  <option value="Μαθηματικά">Μαθηματικά</option>
+                  <option value="Πληροφορική">Πληροφορική</option>
+                  <option value="Αρχαία">Αρχαία</option>
+                  <option value="Έκθεση">Έκθεση</option>
+                  <option value="Φυσική">Φυσική</option>
+                  <option value="Χημεία">Χημεία</option>
+                  <option value="Αγγλικά">Αγγλικά</option>
+                </select>
+              </label>
 
               <label>
                 Διάρκεια
@@ -379,18 +666,137 @@ function App() {
               </div>
 
               <h3>{selectedStudent.name}</h3>
+
+              <button
+                className="edit-btn"
+                onClick={() => setIsEditingStudent(!isEditingStudent)}
+              >
+                {isEditingStudent ? 'Ολοκλήρωση' : 'Επεξεργασία'}
+              </button>
+
               <p>{selectedStudent.subject}</p>
 
               <div className="profile-info">
                 <div>
                   <strong>Τάξη</strong>
-                  <span>{selectedStudent.classLevel}</span>
+
+                  {isEditingStudent ? (
+                    <select
+                      value={selectedStudent.classLevel}
+                      onChange={(e) =>
+                        updateStudentField(
+                          selectedStudent.id,
+                          'classLevel',
+                          e.target.value
+                        )
+                      }
+                    >
+                      <option value="Α' Γυμνασίου">Α' Γυμνασίου</option>
+                      <option value="Β' Γυμνασίου">Β' Γυμνασίου</option>
+                      <option value="Γ' Γυμνασίου">Γ' Γυμνασίου</option>
+                      <option value="Α' Λυκείου">Α' Λυκείου</option>
+                      <option value="Β' Λυκείου">Β' Λυκείου</option>
+                      <option value="Γ' Λυκείου">Γ' Λυκείου</option>
+                    </select>
+                  ) : (
+                    <span>{selectedStudent.classLevel}</span>
+                  )}
+                </div>
+
+                <div>
+                  <strong>Μάθημα</strong>
+
+                  {isEditingStudent ? (
+                    <select
+                      value={selectedStudent.subject}
+                      onChange={(e) =>
+                        updateStudentField(
+                          selectedStudent.id,
+                          'subject',
+                          e.target.value
+                        )
+                      }
+                    >
+                      <option value="Μαθηματικά">Μαθηματικά</option>
+                      <option value="Πληροφορική">Πληροφορική</option>
+                      <option value="Αρχαία">Αρχαία</option>
+                      <option value="Έκθεση">Έκθεση</option>
+                      <option value="Φυσική">Φυσική</option>
+                      <option value="Χημεία">Χημεία</option>
+                      <option value="Αγγλικά">Αγγλικά</option>
+                    </select>
+                  ) : (
+                    <span>{selectedStudent.subject}</span>
+                  )}
                 </div>
 
                 <div>
                   <strong>Τηλέφωνο</strong>
-                  <span>{selectedStudent.phone || 'Δεν έχει προστεθεί'}</span>
+
+                  {isEditingStudent ? (
+                    <input
+                      type="text"
+                      value={selectedStudent.phone}
+                      onChange={(e) =>
+                        updateStudentField(
+                          selectedStudent.id,
+                          'phone',
+                          e.target.value
+                        )
+                      }
+                    />
+                  ) : (
+                    <span>
+                      {selectedStudent.phone || 'Δεν έχει προστεθεί'}
+                    </span>
+                  )}
                 </div>
+
+                <div>
+                  <strong>Τιμή</strong>
+
+                  {isEditingStudent ? (
+                    <input
+                      type="number"
+                      value={selectedStudent.price}
+                      onChange={(e) =>
+                        updateStudentField(
+                          selectedStudent.id,
+                          'price',
+                          Number(e.target.value)
+                        )
+                      }
+                    />
+                  ) : (
+                    <span>{selectedStudent.price}€</span>
+                  )}
+                </div>
+
+                <div>
+                  <strong>Κατάσταση πληρωμής</strong>
+                  <span>{selectedStudent.paid ? 'Πληρωμένο' : 'Εκκρεμεί'}</span>
+                </div>
+              </div>
+
+              <button
+                className={selectedStudent.paid ? 'paid-btn' : 'unpaid-btn'}
+                onClick={() => togglePayment(selectedStudent.id)}
+              >
+                {selectedStudent.paid
+                  ? 'Σήμανση ως απλήρωτο'
+                  : 'Σήμανση ως πληρωμένο'}
+              </button>
+
+              <div className="notes-section">
+                <h4>Σημειώσεις</h4>
+
+                <textarea
+                  placeholder="Γράψε σημειώσεις για τον μαθητή..."
+                  value={selectedStudent.notes}
+                  onChange={(e) =>
+                    updateStudentNotes(selectedStudent.id, e.target.value)
+                  }
+                />
               </div>
             </div>
           </div>

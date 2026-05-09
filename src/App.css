@@ -328,6 +328,8 @@ body {
   border-radius: 24px;
   padding: 26px;
   box-shadow: 0 30px 80px rgba(15, 23, 42, 0.25);
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
 .modal-header {
@@ -456,4 +458,135 @@ body {
 .profile-info span {
   font-weight: 700;
   color: #0f172a;
+}
+
+.notes-section {
+  margin-top: 24px;
+  text-align: left;
+}
+
+.notes-section h4 {
+  margin-bottom: 10px;
+}
+
+.notes-section textarea {
+  width: 100%;
+  min-height: 120px;
+
+  border: 1px solid #e8edf3;
+
+  border-radius: 16px;
+
+  padding: 14px;
+
+  resize: vertical;
+
+  font-family: inherit;
+
+  outline: none;
+}
+
+.notes-section textarea:focus {
+  border-color: #f26a21;
+}
+
+.paid-btn,
+.unpaid-btn {
+  width: 100%;
+  border: none;
+  border-radius: 999px;
+  padding: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  margin-top: 18px;
+}
+
+.paid-btn {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.unpaid-btn {
+  background: #fff1eb;
+  color: #f26a21;
+}
+
+.edit-btn {
+  border: none;
+  background: #eef4ff;
+  color: #2563eb;
+  border-radius: 999px;
+  padding: 10px 16px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 12px;
+}
+
+.lesson-delete-btn {
+  border: none;
+  background: #fee2e2;
+  color: #dc2626;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  font-size: 18px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.lesson-delete-btn:hover {
+  background: #fecaca;
+}
+
+.lesson-row.cancelled {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 14px;
+  padding-left: 12px;
+  padding-right: 12px;
+}
+
+.lesson-row.cancelled h4 {
+  text-decoration: line-through;
+  color: #991b1b;
+}
+
+.lesson-row.cancelled p {
+  color: #dc2626;
+}
+
+.lesson-row.cancelled .lesson-duration {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.lesson-cancel-btn {
+  border: none;
+  background: #fff1eb;
+  color: #f26a21;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.lesson-cancel-btn:hover {
+  background: #ffd1bf;
+}
+
+.lesson-time {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 90px;
+}
+
+.lesson-time span {
+  font-weight: 800;
+}
+
+.lesson-time small {
+  font-size: 11px;
+  color: #94a3b8;
+  font-weight: 600;
 }
