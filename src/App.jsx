@@ -7,6 +7,25 @@ import StudentCard from './components/StudentCard'
 
 const todayDate = new Date().toLocaleDateString('en-CA')
 
+const classLevels = [
+  "Α' Γυμνασίου",
+  "Β' Γυμνασίου",
+  "Γ' Γυμνασίου",
+  "Α' Λυκείου",
+  "Β' Λυκείου",
+  "Γ' Λυκείου",
+]
+
+const subjectOptions = [
+  'Μαθηματικά',
+  'Πληροφορική',
+  'Αρχαία',
+  'Έκθεση',
+  'Φυσική',
+  'Χημεία',
+  'Αγγλικά',
+]
+
 const defaultLessons = [
   {
     id: 1,
@@ -42,33 +61,65 @@ const defaultStudents = [
     id: 1,
     name: 'Νίκος Αλεξίου',
     phone: '6912345678',
-    subject: 'Μαθηματικά',
+    subjects: [
+      {
+        name: 'Μαθηματικά',
+        type: 'hourly',
+        price: 20,
+      },
+    ],
     classLevel: "Γ' Λυκείου",
     notes: '',
-    price: 20,
     paid: false,
   },
   {
     id: 2,
     name: 'Ελένη Κωστοπούλου',
     phone: '6923456789',
-    subject: 'Αγγλικά',
+    subjects: [
+      {
+        name: 'Αγγλικά',
+        type: 'hourly',
+        price: 20,
+      },
+    ],
     classLevel: "Β' Γυμνασίου",
     notes: '',
-    price: 20,
     paid: false,
   },
   {
     id: 3,
     name: 'Μαρία Σταύρου',
     phone: '6934567890',
-    subject: 'Φυσική',
+    subjects: [
+      {
+        name: 'Φυσική',
+        type: 'hourly',
+        price: 20,
+      },
+    ],
     classLevel: "Α' Λυκείου",
     notes: '',
-    price: 20,
     paid: false,
   },
 ]
+
+function normalizeStudent(student) {
+  if (student.subjects) {
+    return student
+  }
+
+  return {
+    ...student,
+    subjects: [
+      {
+        name: student.subject || 'Νέο Μάθημα',
+        type: 'hourly',
+        price: student.price || 20,
+      },
+    ],
+  }
+}
 
 function App() {
   const [lessons, setLessons] = useState(() => {
@@ -78,7 +129,12 @@ function App() {
 
   const [students, setStudents] = useState(() => {
     const savedStudents = localStorage.getItem('didasko_students')
-    return savedStudents ? JSON.parse(savedStudents) : defaultStudents
+
+    if (savedStudents) {
+      return JSON.parse(savedStudents).map(normalizeStudent)
+    }
+
+    return defaultStudents
   })
 
   const [showStudentModal, setShowStudentModal] = useState(false)
@@ -86,6 +142,8 @@ function App() {
   const [selectedStudent, setSelectedStudent] = useState(null)
   const [isEditingStudent, setIsEditingStudent] = useState(false)
   const [activePage, setActivePage] = useState('dashboard')
+  const [scheduleView, setScheduleView] = useState('week')
+  const [selectedDate, setSelectedDate] = useState(null)
 
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
@@ -93,6 +151,7 @@ function App() {
   const [studentClassLevel, setStudentClassLevel] = useState('')
   const [studentSubject, setStudentSubject] = useState('')
   const [studentPrice, setStudentPrice] = useState('')
+  const [studentBillingType, setStudentBillingType] = useState('hourly')
 
   const [lessonStudent, setLessonStudent] = useState('')
   const [lessonTime, setLessonTime] = useState('')
@@ -122,11 +181,16 @@ function App() {
     const newStudent = {
       id: Date.now(),
       name: `${firstName} ${lastName}`,
-      phone: phone,
-      subject: studentSubject,
+      phone,
+      subjects: [
+        {
+          name: studentSubject,
+          type: studentBillingType,
+          price: Number(studentPrice),
+        },
+      ],
       classLevel: studentClassLevel,
       notes: '',
-      price: Number(studentPrice),
       paid: false,
     }
 
@@ -138,6 +202,7 @@ function App() {
     setStudentClassLevel('')
     setStudentSubject('')
     setStudentPrice('')
+    setStudentBillingType('hourly')
     setShowStudentModal(false)
   }
 
@@ -216,6 +281,40 @@ function App() {
     }
   }
 
+  function updateFirstSubject(id, field, value) {
+    const updatedStudents = students.map((student) => {
+      if (student.id === id) {
+        return {
+          ...student,
+          subjects: [
+            {
+              ...student.subjects[0],
+              [field]: value,
+            },
+            ...student.subjects.slice(1),
+          ],
+        }
+      }
+
+      return student
+    })
+
+    setStudents(updatedStudents)
+
+    if (selectedStudent && selectedStudent.id === id) {
+      setSelectedStudent({
+        ...selectedStudent,
+        subjects: [
+          {
+            ...selectedStudent.subjects[0],
+            [field]: value,
+          },
+          ...selectedStudent.subjects.slice(1),
+        ],
+      })
+    }
+  }
+
   function addLesson() {
     if (
       lessonStudent.trim() === '' ||
@@ -267,12 +366,26 @@ function App() {
     .filter((lesson) => lesson.date === today)
     .sort((a, b) => a.time.localeCompare(b.time))
 
-  const sortedLessons = [...lessons].sort((a, b) => {
-    if (a.date === b.date) {
-      return a.time.localeCompare(b.time)
-    }
+  const currentDate = new Date()
 
-    return a.date.localeCompare(b.date)
+  const startOfWeek = new Date(currentDate)
+  startOfWeek.setDate(currentDate.getDate() - currentDate.getDay() + 1)
+
+  const endOfWeek = new Date(startOfWeek)
+  endOfWeek.setDate(startOfWeek.getDate() + 6)
+
+  const weekLessons = lessons.filter((lesson) => {
+    const lessonDate = new Date(lesson.date)
+    return lessonDate >= startOfWeek && lessonDate <= endOfWeek
+  })
+
+  const monthLessons = lessons.filter((lesson) => {
+    const lessonDate = new Date(lesson.date)
+
+    return (
+      lessonDate.getMonth() === currentDate.getMonth() &&
+      lessonDate.getFullYear() === currentDate.getFullYear()
+    )
   })
 
   const totalLessons = lessons.length
@@ -280,11 +393,11 @@ function App() {
 
   const totalIncome = students
     .filter((student) => student.paid)
-    .reduce((total, student) => total + student.price, 0)
+    .reduce((total, student) => total + student.subjects[0].price, 0)
 
   const unpaidAmount = students
     .filter((student) => !student.paid)
-    .reduce((total, student) => total + student.price, 0)
+    .reduce((total, student) => total + student.subjects[0].price, 0)
 
   return (
     <div className="app">
@@ -321,6 +434,7 @@ function App() {
               {activePage === 'schedule' && 'Πρόγραμμα'}
               {activePage === 'students' && 'Μαθητές'}
             </h2>
+
             <p>Καλώς ήρθες στο Didasko</p>
           </div>
 
@@ -378,7 +492,7 @@ function App() {
                       key={student.id}
                       name={student.name}
                       phone={student.phone}
-                      subject={student.subject}
+                      subject={student.subjects[0].name}
                       classLevel={student.classLevel}
                       onClick={() => {
                         setSelectedStudent(student)
@@ -396,6 +510,22 @@ function App() {
             <div className="schedule-page">
               <h2>Πρόγραμμα</h2>
 
+              <div className="schedule-toggle">
+                <button
+                  className={scheduleView === 'week' ? 'active' : ''}
+                  onClick={() => setScheduleView('week')}
+                >
+                  Εβδομάδα
+                </button>
+
+                <button
+                  className={scheduleView === 'month' ? 'active' : ''}
+                  onClick={() => setScheduleView('month')}
+                >
+                  Μήνας
+                </button>
+              </div>
+
               <button
                 onClick={() => setShowLessonModal(true)}
                 className="add-lesson-btn"
@@ -403,20 +533,121 @@ function App() {
                 + Νέο Μάθημα
               </button>
 
-              <div className="all-lessons">
-                {sortedLessons.map((lesson) => (
-                  <LessonRow
-                    key={lesson.id}
-                    time={lesson.time}
-                    date={lesson.date}
-                    student={lesson.student}
-                    subject={lesson.subject}
-                    duration={lesson.duration}
-                    cancelled={lesson.cancelled}
-                    onCancel={() => toggleLessonCancel(lesson.id)}
-                  />
-                ))}
-              </div>
+              {scheduleView === 'week' && (
+                <div className="week-calendar">
+                  {['Δευ', 'Τρι', 'Τετ', 'Πεμ', 'Παρ', 'Σαβ', 'Κυρ'].map(
+                    (dayName, index) => {
+                      const dayLessons = weekLessons.filter((lesson) => {
+                        const lessonDate = new Date(lesson.date)
+
+                        let day = lessonDate.getDay()
+
+                        if (day === 0) day = 7
+
+                        return day === index + 1
+                      })
+
+                      return (
+                        <div className="calendar-column" key={dayName}>
+                          <div className="calendar-day-header">
+                            {dayName}
+                          </div>
+
+                          <div className="calendar-lessons">
+                            {dayLessons.length === 0 && (
+                              <p className="empty-day">Κανένα μάθημα</p>
+                            )}
+
+                            {dayLessons
+                              .sort((a, b) => a.time.localeCompare(b.time))
+                              .map((lesson) => (
+                                <div
+                                  key={lesson.id}
+                                  className={
+                                    lesson.cancelled
+                                      ? 'calendar-lesson cancelled'
+                                      : 'calendar-lesson'
+                                  }
+                                >
+                                  <strong>{lesson.time}</strong>
+                                  <span>{lesson.student}</span>
+                                  <small>{lesson.subject}</small>
+                                </div>
+                              ))}
+                          </div>
+                        </div>
+                      )
+                    }
+                  )}
+                </div>
+              )}
+
+              {scheduleView === 'month' && (
+                <>
+                  <div className="month-calendar">
+                    {Array.from({ length: 31 }, (_, i) => {
+                      const dayNumber = i + 1
+
+                      const date = new Date()
+                      date.setDate(dayNumber)
+
+                      const formattedDate = date.toLocaleDateString('en-CA')
+
+                      const dayLessons = monthLessons.filter((lesson) => {
+                        return lesson.date === formattedDate
+                      })
+
+                      const hasLessons = dayLessons.length > 0
+
+                      return (
+                        <button
+                          type="button"
+                          className={
+                            hasLessons
+                              ? 'month-day has-lessons'
+                              : 'month-day'
+                          }
+                          key={dayNumber}
+                          onClick={() => setSelectedDate(formattedDate)}
+                        >
+                          <div className="month-day-number">
+                            {dayNumber}
+                          </div>
+
+                          {hasLessons && (
+                            <span className="month-lesson-count">
+                              {dayLessons.length} μάθημα
+                              {dayLessons.length > 1 ? 'τα' : ''}
+                            </span>
+                          )}
+                        </button>
+                      )
+                    })}
+                  </div>
+
+                  {selectedDate && (
+                    <div className="selected-day-panel">
+                      <h3>Μαθήματα ημέρας: {selectedDate}</h3>
+
+                      {lessons
+                        .filter((lesson) => lesson.date === selectedDate)
+                        .sort((a, b) => a.time.localeCompare(b.time))
+                        .map((lesson) => (
+                          <LessonRow
+                            key={lesson.id}
+                            time={lesson.time}
+                            date={lesson.date}
+                            student={lesson.student}
+                            subject={lesson.subject}
+                            duration={lesson.duration}
+                            cancelled={lesson.cancelled}
+                            onCancel={() => toggleLessonCancel(lesson.id)}
+                          />
+                        ))}
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           )}
 
@@ -430,7 +661,7 @@ function App() {
                     key={student.id}
                     name={student.name}
                     phone={student.phone}
-                    subject={student.subject}
+                    subject={student.subjects[0].name}
                     classLevel={student.classLevel}
                     onClick={() => {
                       setSelectedStudent(student)
@@ -497,12 +728,12 @@ function App() {
                   onChange={(e) => setStudentClassLevel(e.target.value)}
                 >
                   <option value="">Επίλεξε τάξη</option>
-                  <option value="Α' Γυμνασίου">Α' Γυμνασίου</option>
-                  <option value="Β' Γυμνασίου">Β' Γυμνασίου</option>
-                  <option value="Γ' Γυμνασίου">Γ' Γυμνασίου</option>
-                  <option value="Α' Λυκείου">Α' Λυκείου</option>
-                  <option value="Β' Λυκείου">Β' Λυκείου</option>
-                  <option value="Γ' Λυκείου">Γ' Λυκείου</option>
+
+                  {classLevels.map((level) => (
+                    <option key={level} value={level}>
+                      {level}
+                    </option>
+                  ))}
                 </select>
               </label>
 
@@ -513,18 +744,28 @@ function App() {
                   onChange={(e) => setStudentSubject(e.target.value)}
                 >
                   <option value="">Επίλεξε μάθημα</option>
-                  <option value="Μαθηματικά">Μαθηματικά</option>
-                  <option value="Πληροφορική">Πληροφορική</option>
-                  <option value="Αρχαία">Αρχαία</option>
-                  <option value="Έκθεση">Έκθεση</option>
-                  <option value="Φυσική">Φυσική</option>
-                  <option value="Χημεία">Χημεία</option>
-                  <option value="Αγγλικά">Αγγλικά</option>
+
+                  {subjectOptions.map((subject) => (
+                    <option key={subject} value={subject}>
+                      {subject}
+                    </option>
+                  ))}
                 </select>
               </label>
 
               <label>
-                Τιμή ανά μάθημα
+                Τύπος χρέωσης
+                <select
+                  value={studentBillingType}
+                  onChange={(e) => setStudentBillingType(e.target.value)}
+                >
+                  <option value="hourly">Ανά ώρα</option>
+                  <option value="monthly">Ανά μήνα</option>
+                </select>
+              </label>
+
+              <label>
+                Τιμή
                 <input
                   type="number"
                   value={studentPrice}
@@ -606,13 +847,12 @@ function App() {
                   onChange={(e) => setLessonSubject(e.target.value)}
                 >
                   <option value="">Επίλεξε μάθημα</option>
-                  <option value="Μαθηματικά">Μαθηματικά</option>
-                  <option value="Πληροφορική">Πληροφορική</option>
-                  <option value="Αρχαία">Αρχαία</option>
-                  <option value="Έκθεση">Έκθεση</option>
-                  <option value="Φυσική">Φυσική</option>
-                  <option value="Χημεία">Χημεία</option>
-                  <option value="Αγγλικά">Αγγλικά</option>
+
+                  {subjectOptions.map((subject) => (
+                    <option key={subject} value={subject}>
+                      {subject}
+                    </option>
+                  ))}
                 </select>
               </label>
 
@@ -674,7 +914,19 @@ function App() {
                 {isEditingStudent ? 'Ολοκλήρωση' : 'Επεξεργασία'}
               </button>
 
-              <p>{selectedStudent.subject}</p>
+              <div className="student-subjects-list">
+                {selectedStudent.subjects.map((subject, index) => (
+                  <div key={index} className="student-subject-item">
+                    <strong>{subject.name}</strong>
+
+                    <span>
+                      {subject.type === 'hourly'
+                        ? `${subject.price}€/ώρα`
+                        : `${subject.price}€/μήνα`}
+                    </span>
+                  </div>
+                ))}
+              </div>
 
               <div className="profile-info">
                 <div>
@@ -691,12 +943,11 @@ function App() {
                         )
                       }
                     >
-                      <option value="Α' Γυμνασίου">Α' Γυμνασίου</option>
-                      <option value="Β' Γυμνασίου">Β' Γυμνασίου</option>
-                      <option value="Γ' Γυμνασίου">Γ' Γυμνασίου</option>
-                      <option value="Α' Λυκείου">Α' Λυκείου</option>
-                      <option value="Β' Λυκείου">Β' Λυκείου</option>
-                      <option value="Γ' Λυκείου">Γ' Λυκείου</option>
+                      {classLevels.map((level) => (
+                        <option key={level} value={level}>
+                          {level}
+                        </option>
+                      ))}
                     </select>
                   ) : (
                     <span>{selectedStudent.classLevel}</span>
@@ -704,29 +955,27 @@ function App() {
                 </div>
 
                 <div>
-                  <strong>Μάθημα</strong>
+                  <strong>Βασικό μάθημα</strong>
 
                   {isEditingStudent ? (
                     <select
-                      value={selectedStudent.subject}
+                      value={selectedStudent.subjects[0].name}
                       onChange={(e) =>
-                        updateStudentField(
+                        updateFirstSubject(
                           selectedStudent.id,
-                          'subject',
+                          'name',
                           e.target.value
                         )
                       }
                     >
-                      <option value="Μαθηματικά">Μαθηματικά</option>
-                      <option value="Πληροφορική">Πληροφορική</option>
-                      <option value="Αρχαία">Αρχαία</option>
-                      <option value="Έκθεση">Έκθεση</option>
-                      <option value="Φυσική">Φυσική</option>
-                      <option value="Χημεία">Χημεία</option>
-                      <option value="Αγγλικά">Αγγλικά</option>
+                      {subjectOptions.map((subject) => (
+                        <option key={subject} value={subject}>
+                          {subject}
+                        </option>
+                      ))}
                     </select>
                   ) : (
-                    <span>{selectedStudent.subject}</span>
+                    <span>{selectedStudent.subjects[0].name}</span>
                   )}
                 </div>
 
@@ -758,9 +1007,9 @@ function App() {
                   {isEditingStudent ? (
                     <input
                       type="number"
-                      value={selectedStudent.price}
+                      value={selectedStudent.subjects[0].price}
                       onChange={(e) =>
-                        updateStudentField(
+                        updateFirstSubject(
                           selectedStudent.id,
                           'price',
                           Number(e.target.value)
@@ -768,7 +1017,7 @@ function App() {
                       }
                     />
                   ) : (
-                    <span>{selectedStudent.price}€</span>
+                    <span>{selectedStudent.subjects[0].price}€</span>
                   )}
                 </div>
 
